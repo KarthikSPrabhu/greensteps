@@ -38,127 +38,168 @@ const Dashboard = () => {
     
     try {
       const response = await challengesAPI.complete(dailyChallenge._id);
-      setMessage(response.data.message);
-      fetchUserProfile(); // Refresh user stats
+      setMessage(`🎉 ${response.data.message} +${response.data.pointsEarned} points!`);
+      fetchUserProfile();
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error completing challenge');
+      setMessage(`❌ ${error.response?.data?.message || 'Error completing challenge'}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
-            marginBottom: '0.5rem',
-            background: 'linear-gradient(135deg, #10b981, #3b82f6)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Welcome back, {userStats?.username}!
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>
-            Ready to make a difference today? 🌟
-          </p>
-        </div>
-        
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>🌿 Eco Points</h3>
-            <p>{userStats?.ecoPoints || 0}</p>
-            <small>Total environmental impact</small>
-          </div>
-
-          <div className="stat-card">
-            <h3>🌳 Trees Planted</h3>
-            <p>{userStats?.treesPlanted || 0}</p>
-            <small>Virtual forest growth</small>
-          </div>
-
-          <div className="stat-card">
-            <h3>🔥 Current Streak</h3>
-            <p>{userStats?.streak || 0} days</p>
-            <small>Keep going!</small>
-          </div>
-        </div>
-
-        {dailyChallenge && (
-          <div className="challenge-card">
-            <h3>🌍 Today's Eco Challenge</h3>
-            <p style={{ fontSize: '1.2rem', margin: '1rem 0', lineHeight: '1.6' }}>
-              {dailyChallenge.description}
-            </p>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginTop: '1.5rem'
-            }}>
-              <div>
-                <span style={{
-                  background: '#e0e7ff',
-                  color: '#3730a3',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '15px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  textTransform: 'capitalize'
-                }}>
-                  {dailyChallenge.category}
-                </span>
-                <span style={{
-                  background: '#fef3c7',
-                  color: '#92400e',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '15px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  marginLeft: '0.5rem'
-                }}>
-                  {dailyChallenge.points} points
-                </span>
-              </div>
-              
-              <button 
-                onClick={completeChallenge}
-                className="btn"
-                disabled={loading}
-                style={{ minWidth: '160px' }}
-              >
-                {loading ? (
-                  <>
-                    <span className="loading" style={{ marginRight: '0.5rem' }}></span>
-                    Completing...
-                  </>
-                ) : (
-                  '✅ Mark Completed'
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {message && (
-          <div className={message.includes('Error') ? 'alert alert-error' : 'alert alert-success'}>
-            {message}
-          </div>
-        )}
-
-        <div style={{
-          marginTop: '2rem',
-          padding: '1.5rem',
-          background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)',
-          borderRadius: 'var(--radius)',
-          border: '1px solid #dcfce7'
+    <div className="container fade-in-up">
+      {/* Welcome Section */}
+      <div className="glass-card" style={{ textAlign: 'center' }}>
+        <h1 style={{ 
+          fontSize: '3rem', 
+          marginBottom: '1rem',
+          background: 'linear-gradient(135deg, #10b981, #8b5cf6)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: '800'
         }}>
-          <h4 style={{ color: '#065f46', marginBottom: '1rem' }}>💡 Quick Tip</h4>
-          <p style={{ color: '#047857', margin: 0 }}>
-            Complete challenges daily to maintain your streak and watch your virtual forest grow! 
-            Each tree represents real environmental impact.
-          </p>
+          Welcome back, {userStats?.username}! 🌟
+        </h1>
+        <p style={{ 
+          color: 'var(--text-light)', 
+          fontSize: '1.3rem',
+          maxWidth: '600px',
+          margin: '0 auto'
+        }}>
+          Ready to make today more sustainable? Every small step counts!
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>🌿 Eco Points</h3>
+          <span className="stat-number">{userStats?.ecoPoints || 0}</span>
+          <div className="stat-desc">Total Environmental Impact</div>
+        </div>
+
+        <div className="stat-card">
+          <h3>🌳 Trees Planted</h3>
+          <span className="stat-number">{userStats?.treesPlanted || 0}</span>
+          <div className="stat-desc">Virtual Forest Growth</div>
+        </div>
+
+        <div className="stat-card">
+          <h3>🔥 Current Streak</h3>
+          <span className="stat-number">{userStats?.streak || 0}</span>
+          <div className="stat-desc">Consecutive Days</div>
+        </div>
+      </div>
+
+      {/* Daily Challenge */}
+      {dailyChallenge && (
+        <div className="challenge-card">
+          <div className="challenge-title">
+            <span style={{ fontSize: '2rem' }}>🎯</span>
+            Daily Eco Challenge
+          </div>
+          
+          <div className="challenge-desc">
+            "{dailyChallenge.description}"
+          </div>
+
+          <div className="challenge-meta">
+            <span className="challenge-tag">
+              📁 {dailyChallenge.category}
+            </span>
+            <span className="challenge-points">
+              ⭐ {dailyChallenge.points} points
+            </span>
+            <span className="challenge-tag">
+              🏷️ {dailyChallenge.difficulty}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
+            <button 
+              onClick={completeChallenge}
+              className="btn btn-large"
+              disabled={loading}
+              style={{ 
+                minWidth: '200px',
+                background: 'var(--gradient-secondary)'
+              }}
+            >
+              {loading ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  Completing...
+                </>
+              ) : (
+                <>
+                  ✅ Complete Challenge
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Message Alert */}
+      {message && (
+        <div className={message.includes('❌') ? 'alert alert-error' : 'alert alert-success'}>
+          {message}
+        </div>
+      )}
+
+      {/* Progress Tips */}
+      <div className="glass-card">
+        <h3 style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          marginBottom: '1.5rem',
+          color: 'var(--secondary)'
+        }}>
+          💡 Your Progress Tips
+        </h3>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem'
+        }}>
+          <div style={{
+            padding: '1.5rem',
+            background: 'rgba(16, 185, 129, 0.05)',
+            borderRadius: 'var(--radius)',
+            border: '1px solid rgba(16, 185, 129, 0.1)'
+          }}>
+            <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>🌱 Keep Your Streak</h4>
+            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
+              Complete challenges daily to maintain your {userStats?.streak || 0}-day streak and earn bonus points!
+            </p>
+          </div>
+
+          <div style={{
+            padding: '1.5rem',
+            background: 'rgba(139, 92, 246, 0.05)',
+            borderRadius: 'var(--radius)',
+            border: '1px solid rgba(139, 92, 246, 0.1)'
+          }}>
+            <h4 style={{ color: 'var(--secondary)', marginBottom: '0.5rem' }}>🏆 Climb Leaderboard</h4>
+            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
+              You're making great progress! Check the leaderboard to see how you compare with other eco-warriors.
+            </p>
+          </div>
+
+          <div style={{
+            padding: '1.5rem',
+            background: 'rgba(245, 158, 11, 0.05)',
+            borderRadius: 'var(--radius)',
+            border: '1px solid rgba(245, 158, 11, 0.1)'
+          }}>
+            <h4 style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}>🌳 Grow Your Forest</h4>
+            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
+              Every completed challenge plants a tree in your virtual forest. Watch your environmental impact grow!
+            </p>
+          </div>
         </div>
       </div>
     </div>
