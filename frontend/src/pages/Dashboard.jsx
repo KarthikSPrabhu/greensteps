@@ -50,82 +50,116 @@ const Dashboard = () => {
   return (
     <div className="container">
       <div className="card">
-        <h2>Welcome back, {userStats?.username}! 🌟</h2>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ 
+            fontSize: '2.5rem', 
+            marginBottom: '0.5rem',
+            background: 'linear-gradient(135deg, #10b981, #3b82f6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Welcome back, {userStats?.username}!
+          </h1>
+          <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>
+            Ready to make a difference today? 🌟
+          </p>
+        </div>
         
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1rem',
-          margin: '2rem 0'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            textAlign: 'center'
-          }}>
+        <div className="stats-grid">
+          <div className="stat-card">
             <h3>🌿 Eco Points</h3>
-            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.ecoPoints || 0}</p>
+            <p>{userStats?.ecoPoints || 0}</p>
+            <small>Total environmental impact</small>
           </div>
 
-          <div style={{
-            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-            color: 'white',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            textAlign: 'center'
-          }}>
+          <div className="stat-card">
             <h3>🌳 Trees Planted</h3>
-            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.treesPlanted || 0}</p>
+            <p>{userStats?.treesPlanted || 0}</p>
+            <small>Virtual forest growth</small>
           </div>
 
-          <div style={{
-            background: 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)',
-            color: 'white',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            textAlign: 'center'
-          }}>
-            <h3>🔥 Streak</h3>
-            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.streak || 0} days</p>
+          <div className="stat-card">
+            <h3>🔥 Current Streak</h3>
+            <p>{userStats?.streak || 0} days</p>
+            <small>Keep going!</small>
           </div>
         </div>
 
         {dailyChallenge && (
-          <div style={{
-            background: '#e8f5e8',
-            padding: '2rem',
-            borderRadius: '10px',
-            margin: '2rem 0'
-          }}>
+          <div className="challenge-card">
             <h3>🌍 Today's Eco Challenge</h3>
-            <p style={{ fontSize: '1.2rem', margin: '1rem 0' }}>{dailyChallenge.description}</p>
-            <p><strong>Points:</strong> {dailyChallenge.points}</p>
-            <p><strong>Category:</strong> {dailyChallenge.category}</p>
-            
-            <button 
-              onClick={completeChallenge}
-              className="btn"
-              disabled={loading}
-              style={{ marginTop: '1rem' }}
-            >
-              {loading ? 'Completing...' : 'Mark as Completed'}
-            </button>
+            <p style={{ fontSize: '1.2rem', margin: '1rem 0', lineHeight: '1.6' }}>
+              {dailyChallenge.description}
+            </p>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginTop: '1.5rem'
+            }}>
+              <div>
+                <span style={{
+                  background: '#e0e7ff',
+                  color: '#3730a3',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '15px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  textTransform: 'capitalize'
+                }}>
+                  {dailyChallenge.category}
+                </span>
+                <span style={{
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '15px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  marginLeft: '0.5rem'
+                }}>
+                  {dailyChallenge.points} points
+                </span>
+              </div>
+              
+              <button 
+                onClick={completeChallenge}
+                className="btn"
+                disabled={loading}
+                style={{ minWidth: '160px' }}
+              >
+                {loading ? (
+                  <>
+                    <span className="loading" style={{ marginRight: '0.5rem' }}></span>
+                    Completing...
+                  </>
+                ) : (
+                  '✅ Mark Completed'
+                )}
+              </button>
+            </div>
           </div>
         )}
 
         {message && (
-          <div style={{
-            background: message.includes('Error') ? '#f8d7da' : '#d4edda',
-            color: message.includes('Error') ? '#721c24' : '#155724',
-            padding: '1rem',
-            borderRadius: '8px',
-            marginTop: '1rem'
-          }}>
+          <div className={message.includes('Error') ? 'alert alert-error' : 'alert alert-success'}>
             {message}
           </div>
         )}
+
+        <div style={{
+          marginTop: '2rem',
+          padding: '1.5rem',
+          background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)',
+          borderRadius: 'var(--radius)',
+          border: '1px solid #dcfce7'
+        }}>
+          <h4 style={{ color: '#065f46', marginBottom: '1rem' }}>💡 Quick Tip</h4>
+          <p style={{ color: '#047857', margin: 0 }}>
+            Complete challenges daily to maintain your streak and watch your virtual forest grow! 
+            Each tree represents real environmental impact.
+          </p>
+        </div>
       </div>
     </div>
   );

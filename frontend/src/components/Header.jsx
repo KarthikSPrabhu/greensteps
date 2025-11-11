@@ -13,10 +13,15 @@ const Header = () => {
 
   return (
     <header style={{
-      background: 'white',
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(10px)',
       padding: '1rem 0',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      marginBottom: '2rem'
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+      marginBottom: '2rem',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000
     }}>
       <div className="container">
         <div style={{
@@ -26,29 +31,44 @@ const Header = () => {
         }}>
           <Link to="/" style={{
             textDecoration: 'none',
-            color: '#333',
-            fontSize: '1.5rem',
-            fontWeight: 'bold'
+            color: '#10b981',
+            fontSize: '1.75rem',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
-            🌱 GreenSteps
+            <span style={{ fontSize: '2rem' }}>🌱</span>
+            GreenSteps
           </Link>
 
-          <nav>
+          <nav className="header-nav">
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                <span>Hello, {user.username}!</span>
+              <>
+                <span style={{ 
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '25px',
+                  fontSize: '0.9rem',
+                  fontWeight: '600'
+                }}>
+                  🌟 {user.username}
+                </span>
                 <Link to="/dashboard">Dashboard</Link>
                 <Link to="/forest">My Forest</Link>
                 <Link to="/leaderboard">Leaderboard</Link>
                 <Link to="/tips">Green Tips</Link>
-                <button onClick={handleLogout} className="btn btn-secondary">
+                <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '8px 20px' }}>
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <Link to="/login" className="btn btn-secondary">Login</Link>
-                <Link to="/register" className="btn">Register</Link>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <Link to="/about">About</Link>
+                <Link to="/tips">Tips</Link>
+                <Link to="/login" className="btn btn-secondary" style={{ padding: '8px 20px' }}>Login</Link>
+                <Link to="/register" className="btn" style={{ padding: '8px 20px' }}>Get Started</Link>
               </div>
             )}
           </nav>
