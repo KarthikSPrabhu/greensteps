@@ -22,9 +22,12 @@ const MyForest = () => {
     const trees = [];
     const treeCount = userStats?.treesPlanted || 0;
     
-    for (let i = 0; i < treeCount; i++) {
+    // Show maximum 20 trees in the visual forest
+    const displayCount = Math.min(treeCount, 20);
+    
+    for (let i = 0; i < displayCount; i++) {
       trees.push(
-        <div key={i} className="tree">
+        <div key={i} className="tree" style={{ fontSize: '2rem' }}>
           {i % 3 === 0 ? '🌲' : i % 3 === 1 ? '🌴' : '🎄'}
         </div>
       );
@@ -43,15 +46,43 @@ const MyForest = () => {
         </p>
 
         {userStats?.treesPlanted > 0 ? (
-          <div className="forest">
-            {renderTrees()}
+          <div>
+            {/* Compact Forest Grid - TRANSPARENT BACKGROUND */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+              gap: '0.5rem',
+              padding: '1rem',
+              background: 'transparent', // Changed to transparent
+              borderRadius: '10px',
+              justifyContent: 'center'
+            }}>
+              {renderTrees()}
+            </div>
+
+            {/* Tree Count Message */}
+            {userStats?.treesPlanted > 20 && (
+              <div style={{
+                textAlign: 'center',
+                marginTop: '1rem',
+                padding: '0.5rem',
+                background: '#fff3cd',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                color: '#856404'
+              }}>
+                🌟 Amazing! You have {userStats.treesPlanted} trees total. 
+                Showing first 20 trees in your forest.
+              </div>
+            )}
           </div>
         ) : (
           <div style={{
             textAlign: 'center',
             padding: '4rem 2rem',
-            background: '#f8f9fa',
-            borderRadius: '10px'
+            background: 'transparent', // Changed to transparent
+            borderRadius: '10px',
+            border: '2px dashed #dee2e6' // Added border for empty state
           }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🌱</div>
             <h3>No trees planted yet!</h3>
