@@ -3,22 +3,24 @@ import { challengesAPI, usersAPI } from '../utils/api';
 import { getUser, setUser } from '../utils/auth';
 
 const Dashboard = () => {
-  const [dailyChallenge, setDailyChallenge] = useState(null);
+  const [dailyChallenges, setDailyChallenges] = useState([]);
+  const [completedToday, setCompletedToday] = useState([]);
   const [userStats, setUserStats] = useState(getUser());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetchDailyChallenge();
+    fetchDailyChallenges();
     fetchUserProfile();
+    fetchCompletedToday();
   }, []);
 
-  const fetchDailyChallenge = async () => {
+  const fetchDailyChallenges = async () => {
     try {
-      const response = await challengesAPI.getDaily();
-      setDailyChallenge(response.data);
+      const response = await challengesAPI.getDailyMultiple();
+      setDailyChallenges(response.data);
     } catch (error) {
-      console.error('Error fetching challenge:', error);
+      console.error('Error fetching challenges:', error);
     }
   };
 
@@ -32,175 +34,207 @@ const Dashboard = () => {
     }
   };
 
-  const completeChallenge = async () => {
+  const fetchCompletedToday = async () => {
+    try {
+      const response = await challengesAPI.getCompletedToday();
+      setCompletedToday(response.data);
+    } catch (error) {
+      console.error('Error fetching completed challenges:', error);
+    }
+  };
+
+  const completeChallenge = async (challengeId) => {
     setLoading(true);
     setMessage('');
     
     try {
-      const response = await challengesAPI.complete(dailyChallenge._id);
-      setMessage(`🎉 ${response.data.message} +${response.data.pointsEarned} points!`);
+      const response = await challengesAPI.complete(challengeId);
+      setMessage(`${response.data.message} +${response.data.pointsEarned} points!`);
+      
+      // Refresh all data
       fetchUserProfile();
+      fetchCompletedToday();
+      fetchDailyChallenges();
     } catch (error) {
-      setMessage(`❌ ${error.response?.data?.message || 'Error completing challenge'}`);
+      setMessage(error.response?.data?.message || 'Error completing challenge');
     } finally {
       setLoading(false);
     }
   };
 
+  const isChallengeCompleted = (challengeId) => {
+    return completedToday.some(comp => 
+      comp.challengeId._id === challengeId
+    );
+  };
+
   return (
-    <div className="container fade-in-up">
-      {/* Welcome Section */}
-      <div className="glass-card" style={{ textAlign: 'center' }}>
-        <h1 style={{ 
-          fontSize: '3rem', 
-          marginBottom: '1rem',
-          background: 'linear-gradient(135deg, #10b981, #8b5cf6)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontWeight: '800'
-        }}>
-          Welcome back, {userStats?.username}! 🌟
-        </h1>
-        <p style={{ 
-          color: 'var(--text-light)', 
-          fontSize: '1.3rem',
-          maxWidth: '600px',
-          margin: '0 auto'
-        }}>
-          Ready to make today more sustainable? Every small step counts!
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <h3>🌿 Eco Points</h3>
-          <span className="stat-number">{userStats?.ecoPoints || 0}</span>
-          <div className="stat-desc">Total Environmental Impact</div>
-        </div>
-
-        <div className="stat-card">
-          <h3>🌳 Trees Planted</h3>
-          <span className="stat-number">{userStats?.treesPlanted || 0}</span>
-          <div className="stat-desc">Virtual Forest Growth</div>
-        </div>
-
-        <div className="stat-card">
-          <h3>🔥 Current Streak</h3>
-          <span className="stat-number">{userStats?.streak || 0}</span>
-          <div className="stat-desc">Consecutive Days</div>
-        </div>
-      </div>
-
-      {/* Daily Challenge */}
-      {dailyChallenge && (
-        <div className="challenge-card">
-          <div className="challenge-title">
-            <span style={{ fontSize: '2rem' }}>🎯</span>
-            Daily Eco Challenge
-          </div>
-          
-          <div className="challenge-desc">
-            "{dailyChallenge.description}"
-          </div>
-
-          <div className="challenge-meta">
-            <span className="challenge-tag">
-              📁 {dailyChallenge.category}
-            </span>
-            <span className="challenge-points">
-              ⭐ {dailyChallenge.points} points
-            </span>
-            <span className="challenge-tag">
-              🏷️ {dailyChallenge.difficulty}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
-            <button 
-              onClick={completeChallenge}
-              className="btn btn-large"
-              disabled={loading}
-              style={{ 
-                minWidth: '200px',
-                background: 'var(--gradient-secondary)'
-              }}
-            >
-              {loading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Completing...
-                </>
-              ) : (
-                <>
-                  ✅ Complete Challenge
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Message Alert */}
-      {message && (
-        <div className={message.includes('❌') ? 'alert alert-error' : 'alert alert-success'}>
-          {message}
-        </div>
-      )}
-
-      {/* Progress Tips */}
-      <div className="glass-card">
-        <h3 style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px',
-          marginBottom: '1.5rem',
-          color: 'var(--secondary)'
-        }}>
-          💡 Your Progress Tips
-        </h3>
+    <div className="container">
+      <div className="card">
+        <h2>Welcome back, {userStats?.username}! 🌟</h2>
         
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          margin: '2rem 0'
         }}>
           <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             padding: '1.5rem',
-            background: 'rgba(16, 185, 129, 0.05)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid rgba(16, 185, 129, 0.1)'
+            borderRadius: '10px',
+            textAlign: 'center'
           }}>
-            <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>🌱 Keep Your Streak</h4>
-            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
-              Complete challenges daily to maintain your {userStats?.streak || 0}-day streak and earn bonus points!
-            </p>
+            <h3>🌿 Eco Points</h3>
+            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.ecoPoints || 0}</p>
           </div>
 
           <div style={{
+            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+            color: 'white',
             padding: '1.5rem',
-            background: 'rgba(139, 92, 246, 0.05)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid rgba(139, 92, 246, 0.1)'
+            borderRadius: '10px',
+            textAlign: 'center'
           }}>
-            <h4 style={{ color: 'var(--secondary)', marginBottom: '0.5rem' }}>🏆 Climb Leaderboard</h4>
-            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
-              You're making great progress! Check the leaderboard to see how you compare with other eco-warriors.
-            </p>
+            <h3>🌳 Trees Planted</h3>
+            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.treesPlanted || 0}</p>
           </div>
 
           <div style={{
+            background: 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)',
+            color: 'white',
             padding: '1.5rem',
-            background: 'rgba(245, 158, 11, 0.05)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid rgba(245, 158, 11, 0.1)'
+            borderRadius: '10px',
+            textAlign: 'center'
           }}>
-            <h4 style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}>🌳 Grow Your Forest</h4>
-            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '0.9rem' }}>
-              Every completed challenge plants a tree in your virtual forest. Watch your environmental impact grow!
-            </p>
+            <h3>🔥 Streak</h3>
+            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{userStats?.streak || 0} days</p>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%)',
+            color: 'white',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <h3>✅ Completed Today</h3>
+            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{completedToday.length}/3</p>
           </div>
         </div>
+
+        <div style={{
+          background: '#e8f5e8',
+          padding: '2rem',
+          borderRadius: '10px',
+          margin: '2rem 0'
+        }}>
+          <h3>🌍 Today's Eco Challenges</h3>
+          <p style={{ marginBottom: '1rem' }}>
+            Complete multiple challenges today! Each challenge gives you points and plants a tree.
+          </p>
+
+          {dailyChallenges.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {dailyChallenges.map((challenge, index) => {
+                const completed = isChallengeCompleted(challenge._id);
+                
+                return (
+                  <div key={challenge._id} style={{
+                    padding: '1.5rem',
+                    background: completed ? '#d4edda' : 'white',
+                    border: `2px solid ${completed ? '#28a745' : '#e1e5e9'}`,
+                    borderRadius: '10px',
+                    position: 'relative'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: completed ? '#28a745' : '#6c757d',
+                      color: 'white',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '15px',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {completed ? '✅ Completed' : `${challenge.points} pts`}
+                    </div>
+
+                    <h4 style={{ 
+                      margin: '0 0 0.5rem 0',
+                      color: completed ? '#155724' : '#333'
+                    }}>
+                      {challenge.title}
+                    </h4>
+                    
+                    <p style={{ 
+                      margin: '0 0 1rem 0',
+                      color: completed ? '#155724' : '#666'
+                    }}>
+                      {challenge.description}
+                    </p>
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{
+                        background: '#f8f9fa',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '15px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                      }}>
+                        Category: {challenge.category}
+                      </span>
+                      
+                      <button 
+                        onClick={() => completeChallenge(challenge._id)}
+                        className="btn"
+                        disabled={loading || completed}
+                        style={{
+                          opacity: completed ? 0.6 : 1,
+                          cursor: completed ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {completed ? 'Completed' : 'Mark as Done'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p>Loading challenges...</p>
+          )}
+        </div>
+
+        {message && (
+          <div style={{
+            background: message.includes('Error') ? '#f8d7da' : '#d4edda',
+            color: message.includes('Error') ? '#721c24' : '#155724',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginTop: '1rem'
+          }}>
+            {message}
+          </div>
+        )}
+
+        {completedToday.length > 0 && (
+          <div style={{
+            background: '#d1ecf1',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            marginTop: '2rem'
+          }}>
+            <h4>🎉 Today's Progress</h4>
+            <p>You've completed {completedToday.length} challenge(s) today! Keep going! 🚀</p>
+          </div>
+        )}
       </div>
     </div>
   );

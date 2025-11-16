@@ -20,7 +20,9 @@ export const authAPI = {
 
 export const challengesAPI = {
   getDaily: () => API.get('/challenges/daily'),
+  getDailyMultiple: () => API.get('/challenges/daily-multiple'),
   complete: (challengeId) => API.post('/challenges/complete', { challengeId }),
+  getCompletedToday: () => API.get('/challenges/completed-today'),
 };
 
 export const usersAPI = {

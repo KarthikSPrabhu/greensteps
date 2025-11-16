@@ -7,6 +7,7 @@ import connectDB from './config/database.js';
 import authRoutes from './routes/auth.js';
 import challengeRoutes from './routes/challenges.js';
 import userRoutes from './routes/users.js';
+import migrateRoutes from './routes/migrate.js';
 
 dotenv.config();
 connectDB();
@@ -31,3 +32,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Migrate route
+app.use('/api/migrate', migrateRoutes);

@@ -30,14 +30,24 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  lastChallengeDate: {
-    type: Date,
-    default: null
-  },
   streak: {
     type: Number,
     default: 0
-  }
+  },
+  completedChallenges: [{
+    challengeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Challenge'
+    },
+    completedAt: {
+      type: Date,
+      default: Date.now
+    },
+    pointsEarned: {
+      type: Number,
+      default: 0
+    }
+  }]
 }, {
   timestamps: true
 });
