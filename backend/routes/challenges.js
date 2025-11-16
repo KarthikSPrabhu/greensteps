@@ -100,10 +100,63 @@ router.get('/', async (req, res) => {
 });
 
 // Get multiple daily challenges (5 random challenges instead of 3)
+// Get daily challenges - static completed + dynamic remaining
 router.get('/daily-multiple', protect, async (req, res) => {
   try {
-    const challenges = await Challenge.aggregate([{ $sample: { size: 5 } }]);
-    res.json(challenges);
+    const user = await User.findById(req.user._id);
+    const today = new Date().toDateString();
+    
+    // Get today's completed challenges
+    const todayCompleted = user.completedChallenges?.filter(
+      comp => comp.completedAt.toDateString() === today
+    ) || [];
+
+    // Get completed challenge IDs
+    const completedChallengeIds = todayCompleted.map(comp => comp.challengeId);
+
+    // Get 5 random challenges excluding completed ones
+    let remainingChallenges = await Challenge.aggregate([
+      { $match: { _id: { $nin: completedChallengeIds } } },
+      { $sample: { size: 5 } }
+    ]);
+
+    // If we don't have enough remaining challenges, get some anyway
+    if (remainingChallenges.length < 5) {
+      const extraChallenges = await Challenge.aggregate([
+        { $match: { _id: { $nin: completedChallengeIds } } },
+        { $sample: { size: 5 - remainingChallenges.length } }
+      ]);
+      remainingChallenges = [...remainingChallenges, ...extraChallenges];
+    }
+
+    // Get completed challenges data
+    const completedChallengesData = await Challenge.find({
+      _id: { $in: completedChallengeIds }
+    });
+
+    // Add completion info to completed challenges
+    const completedWithInfo = completedChallengesData.map(challenge => ({
+      ...challenge.toObject(),
+      completed: true,
+      completedAt: todayCompleted.find(comp => 
+        comp.challengeId.toString() === challenge._id.toString()
+      )?.completedAt
+    }));
+
+    // Mark remaining as not completed
+    const remainingWithInfo = remainingChallenges.map(challenge => ({
+      ...challenge,
+      completed: false
+    }));
+
+    res.json({
+      completed: completedWithInfo,
+      remaining: remainingWithInfo,
+      progress: {
+        completed: completedWithInfo.length,
+        total: completedWithInfo.length + remainingWithInfo.length
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

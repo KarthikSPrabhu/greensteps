@@ -3,8 +3,10 @@ import { challengesAPI, usersAPI } from '../utils/api';
 import { getUser, setUser } from '../utils/auth';
 
 const Dashboard = () => {
-  const [dailyChallenges, setDailyChallenges] = useState([]);
-  const [completedToday, setCompletedToday] = useState([]);
+  const [challengesData, setChallengesData] = useState({
+    completed: [],
+    remaining: []
+  });
   const [userStats, setUserStats] = useState(getUser());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -13,13 +15,12 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDailyChallenges();
     fetchUserProfile();
-    fetchCompletedToday();
   }, []);
 
   const fetchDailyChallenges = async () => {
     try {
       const response = await challengesAPI.getDailyMultiple();
-      setDailyChallenges(response.data);
+      setChallengesData(response.data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
     }
@@ -35,15 +36,6 @@ const Dashboard = () => {
     }
   };
 
-  const fetchCompletedToday = async () => {
-    try {
-      const response = await challengesAPI.getCompletedToday();
-      setCompletedToday(response.data);
-    } catch (error) {
-      console.error('Error fetching completed challenges:', error);
-    }
-  };
-
   const completeChallenge = async (challengeId) => {
     setLoading(true);
     setMessage('');
@@ -54,7 +46,6 @@ const Dashboard = () => {
       
       // Refresh all data
       fetchUserProfile();
-      fetchCompletedToday();
       fetchDailyChallenges();
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error completing challenge');
@@ -63,36 +54,21 @@ const Dashboard = () => {
     }
   };
 
-  const isChallengeCompleted = (challengeId) => {
-    return completedToday.some(comp => 
-      comp.challengeId._id === challengeId
-    );
-  };
-
-  // Filter challenges by category
+  // Combine and filter challenges
+  const allChallenges = [...challengesData.completed, ...challengesData.remaining];
   const filteredChallenges = selectedCategory === 'all' 
-    ? dailyChallenges 
-    : dailyChallenges.filter(challenge => challenge.category === selectedCategory);
+    ? allChallenges 
+    : allChallenges.filter(challenge => challenge.category === selectedCategory);
 
   // Get unique categories for filter
-  const categories = ['all', ...new Set(dailyChallenges.map(challenge => challenge.category))];
-
-  // Category icons mapping
-  const categoryIcons = {
-    transport: '🚗',
-    energy: '💡',
-    food: '🍎',
-    waste: '🗑️',
-    water: '💧',
-    nature: '🌳',
-    home: '🏠'
-  };
+  const categories = ['all', ...new Set(allChallenges.map(challenge => challenge.category))];
 
   return (
     <div className="container">
       <div className="card">
         <h2>Welcome back, {userStats?.username}! 🌟</h2>
         
+        {/* Stats Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -140,7 +116,35 @@ const Dashboard = () => {
             textAlign: 'center'
           }}>
             <h3>✅ Completed Today</h3>
-            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{completedToday.length}/5</p>
+            <p style={{ fontSize: '2rem', margin: '0.5rem 0' }}>
+              {challengesData.completed.length}/5
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ margin: '2rem 0' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '0.5rem'
+          }}>
+            <span>Today's Progress</span>
+            <span>{challengesData.completed.length}/5 challenges completed</span>
+          </div>
+          <div style={{
+            width: '100%',
+            height: '10px',
+            background: '#e9ecef',
+            borderRadius: '5px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${(challengesData.completed.length / 5) * 100}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #28a745, #20c997)',
+              transition: 'width 0.3s ease'
+            }}></div>
           </div>
         </div>
 
@@ -159,233 +163,212 @@ const Dashboard = () => {
                   border: '1px solid #dee2e6',
                   borderRadius: '20px',
                   cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.3s ease'
+                  fontSize: '0.9rem'
                 }}
               >
-                {category === 'all' ? '🌍 All Categories' : 
-                 `${categoryIcons[category]} ${category.charAt(0).toUpperCase() + category.slice(1)}`}
+                {category === 'all' ? '🌍 All' : 
+                 category === 'transport' ? '🚗 Transport' :
+                 category === 'energy' ? '💡 Energy' :
+                 category === 'food' ? '🍎 Food' :
+                 category === 'waste' ? '🗑️ Waste' :
+                 category === 'water' ? '💧 Water' :
+                 category === 'nature' ? '🌳 Nature' :
+                 category === 'home' ? '🏠 Home' : category}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Challenges Section */}
         <div style={{
           background: '#e8f5e8',
           padding: '2rem',
           borderRadius: '10px',
           margin: '2rem 0'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0 }}>🌍 Today's Eco Challenges</h3>
-            <span style={{
-              background: '#28a745',
-              color: 'white',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '15px',
-              fontSize: '0.9rem',
-              fontWeight: 'bold'
-            }}>
-              {filteredChallenges.length} challenges
-            </span>
-          </div>
-          
+          <h3>🌍 Today's Eco Challenges</h3>
           <p style={{ marginBottom: '1rem' }}>
-            Complete up to 5 challenges today! Each challenge gives you points and plants a tree.
+            Your completed challenges stay with you all day. New challenges appear as you complete them!
           </p>
 
-          {filteredChallenges.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {filteredChallenges.map((challenge, index) => {
-                const completed = isChallengeCompleted(challenge._id);
-                
-                return (
+          {/* Completed Challenges - STATIC */}
+          {challengesData.completed.length > 0 && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h4 style={{ color: '#28a745', marginBottom: '1rem' }}>
+                ✅ Completed Challenges ({challengesData.completed.length})
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {filteredChallenges
+                  .filter(challenge => challenge.completed)
+                  .map((challenge) => (
                   <div key={challenge._id} style={{
                     padding: '1.5rem',
-                    background: completed ? '#d4edda' : 'white',
-                    border: `2px solid ${completed ? '#28a745' : '#e1e5e9'}`,
+                    background: '#d4edda',
+                    border: '2px solid #28a745',
                     borderRadius: '10px',
-                    position: 'relative',
-                    transition: 'all 0.3s ease'
+                    position: 'relative'
                   }}>
                     <div style={{
                       position: 'absolute',
                       top: '10px',
                       right: '10px',
-                      background: completed ? '#28a745' : '#6c757d',
+                      background: '#28a745',
                       color: 'white',
                       padding: '0.25rem 0.75rem',
                       borderRadius: '15px',
                       fontSize: '0.8rem',
                       fontWeight: 'bold'
                     }}>
-                      {completed ? '✅ Completed' : `${challenge.points} pts`}
+                      ✅ Completed
                     </div>
 
-                    <div style={{
-                      position: 'absolute',
-                      top: '10px',
-                      left: '10px',
-                      background: '#e9ecef',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '10px',
-                      fontSize: '0.7rem',
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase'
-                    }}>
-                      {challenge.difficulty}
-                    </div>
-
-                    <h4 style={{ 
-                      margin: '0 0 0.5rem 0',
-                      color: completed ? '#155724' : '#333',
-                      paddingRight: '80px',
-                      paddingLeft: '70px'
-                    }}>
-                      {categoryIcons[challenge.category]} {challenge.title}
+                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#155724' }}>
+                      {challenge.title}
                     </h4>
                     
-                    <p style={{ 
-                      margin: '0 0 1rem 0',
-                      color: completed ? '#155724' : '#666',
-                      lineHeight: '1.5'
-                    }}>
+                    <p style={{ margin: '0 0 1rem 0', color: '#155724' }}>
                       {challenge.description}
                     </p>
                     
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '0.5rem'
+                      alignItems: 'center'
                     }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{
-                          background: '#f8f9fa',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '15px',
-                          fontSize: '0.8rem',
-                          fontWeight: 'bold',
-                          border: '1px solid #dee2e6'
-                        }}>
-                          {categoryIcons[challenge.category]} {challenge.category}
-                        </span>
-                        <span style={{
-                          background: challenge.difficulty === 'easy' ? '#d4edda' : 
-                                    challenge.difficulty === 'medium' ? '#fff3cd' : '#f8d7da',
-                          color: challenge.difficulty === 'easy' ? '#155724' : 
-                                 challenge.difficulty === 'medium' ? '#856404' : '#721c24',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '15px',
-                          fontSize: '0.8rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {challenge.difficulty}
-                        </span>
-                      </div>
+                      <span style={{
+                        background: '#c3e6cb',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '15px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        color: '#155724'
+                      }}>
+                        {challenge.category} • +{challenge.points} pts
+                      </span>
+                      
+                      <span style={{
+                        color: '#155724',
+                        fontSize: '0.8rem',
+                        fontStyle: 'italic'
+                      }}>
+                        Completed today
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Remaining Challenges - DYNAMIC */}
+          {challengesData.remaining.length > 0 && (
+            <div>
+              <h4 style={{ color: '#856404', marginBottom: '1rem' }}>
+                🎯 Available Challenges ({challengesData.remaining.length})
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {filteredChallenges
+                  .filter(challenge => !challenge.completed)
+                  .map((challenge) => (
+                  <div key={challenge._id} style={{
+                    padding: '1.5rem',
+                    background: 'white',
+                    border: '2px solid #ffeaa7',
+                    borderRadius: '10px',
+                    position: 'relative'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: '#ffc107',
+                      color: '#856404',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '15px',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {challenge.points} pts
+                    </div>
+
+                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>
+                      {challenge.title}
+                    </h4>
+                    
+                    <p style={{ margin: '0 0 1rem 0', color: '#666' }}>
+                      {challenge.description}
+                    </p>
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{
+                        background: '#fff3cd',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '15px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        color: '#856404'
+                      }}>
+                        {challenge.category} • {challenge.difficulty}
+                      </span>
                       
                       <button 
                         onClick={() => completeChallenge(challenge._id)}
                         className="btn"
-                        disabled={loading || completed}
+                        disabled={loading}
                         style={{
-                          opacity: completed ? 0.6 : 1,
-                          cursor: completed ? 'not-allowed' : 'pointer',
-                          minWidth: '120px'
+                          background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
                         }}
                       >
-                        {completed ? 'Completed' : loading ? 'Completing...' : 'Mark as Done'}
+                        {loading ? 'Completing...' : 'Mark as Done'}
                       </button>
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          ) : (
-            <div style={{ 
-              textAlign: 'center', 
+          )}
+
+          {filteredChallenges.length === 0 && (
+            <div style={{
+              textAlign: 'center',
               padding: '2rem',
-              background: 'white',
+              background: '#f8f9fa',
               borderRadius: '10px'
             }}>
-              <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                {selectedCategory === 'all' 
-                  ? 'Loading challenges...' 
-                  : `No challenges found in ${selectedCategory} category. Try another filter!`}
-              </p>
-              {selectedCategory !== 'all' && (
-                <button 
-                  onClick={() => setSelectedCategory('all')}
-                  className="btn"
-                  style={{ marginTop: '0.5rem' }}
-                >
-                  Show All Categories
-                </button>
-              )}
+              <h4>🎉 Amazing Work!</h4>
+              <p>You've completed all available challenges in this category today!</p>
             </div>
           )}
         </div>
 
+        {/* Messages */}
         {message && (
           <div style={{
             background: message.includes('Error') ? '#f8d7da' : '#d4edda',
             color: message.includes('Error') ? '#721c24' : '#155724',
             padding: '1rem',
             borderRadius: '8px',
-            marginTop: '1rem',
-            border: `1px solid ${message.includes('Error') ? '#f5c6cb' : '#c3e6cb'}`
+            marginTop: '1rem'
           }}>
             {message}
           </div>
         )}
 
-        {completedToday.length > 0 && (
+        {/* Daily Goal Message */}
+        {challengesData.completed.length >= 3 && (
           <div style={{
-            background: completedToday.length >= 3 ? '#d4edda' : '#d1ecf1',
+            background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
             padding: '1.5rem',
             borderRadius: '10px',
             marginTop: '2rem',
-            border: `2px solid ${completedToday.length >= 3 ? '#28a745' : '#17a2b8'}`
+            textAlign: 'center'
           }}>
-            <h4>🎉 Today's Progress</h4>
-            <p>
-              You've completed {completedToday.length} out of 5 challenges today!{' '}
-              {completedToday.length >= 5 ? "Amazing! You've completed all challenges! 🏆" :
-               completedToday.length >= 3 ? "Great job! You're doing awesome! 🌟" : 
-               "Keep going! Every challenge makes a difference! 🚀"}
-            </p>
-            <div style={{
-              background: '#f8f9fa',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              marginTop: '0.5rem'
-            }}>
-              <div style={{
-                width: '100%',
-                background: '#e9ecef',
-                borderRadius: '10px',
-                height: '10px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${(completedToday.length / 5) * 100}%`,
-                  background: completedToday.length >= 3 ? '#28a745' : '#17a2b8',
-                  height: '100%',
-                  transition: 'width 0.5s ease'
-                }}></div>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '0.5rem',
-                fontSize: '0.9rem',
-                color: '#6c757d'
-              }}>
-                <span>{completedToday.length}/5 completed</span>
-                <span>{Math.round((completedToday.length / 5) * 100)}%</span>
-              </div>
-            </div>
+            <h4>🏆 Daily Goal Achieved!</h4>
+            <p>You've completed {challengesData.completed.length} challenges today! You're making a real impact! 🌍</p>
           </div>
         )}
       </div>
