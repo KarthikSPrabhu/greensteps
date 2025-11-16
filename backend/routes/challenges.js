@@ -75,15 +75,15 @@ router.post('/complete', protect, async (req, res) => {
     await user.save();
 
     res.json({
-      message: 'Challenge completed!',
-      pointsEarned: challenge.points,
-      totalPoints: user.ecoPoints,
-      treesPlanted: user.treesPlanted,
-      streak: user.streak,
-      challengesCompletedToday: user.completedChallenges.filter(
-        comp => comp.completedAt.toDateString() === today
-      ).length
-    });
+  message: 'Challenge completed!',
+  pointsEarned: challenge.points,
+  totalPoints: user.ecoPoints,
+  treesPlanted: user.treesPlanted,
+  streak: user.streak,
+  challengesCompletedToday: user.completedChallenges.filter(
+    comp => comp.completedAt.toDateString() === today
+  ).length
+});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -99,10 +99,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get multiple daily challenges (3 random challenges)
+// Get multiple daily challenges (5 random challenges instead of 3)
 router.get('/daily-multiple', protect, async (req, res) => {
   try {
-    const challenges = await Challenge.aggregate([{ $sample: { size: 3 } }]);
+    const challenges = await Challenge.aggregate([{ $sample: { size: 5 } }]);
     res.json(challenges);
   } catch (error) {
     res.status(500).json({ message: error.message });
